@@ -60,11 +60,12 @@ def deploy_to_embedded(
     embedded_dir = root / "embedded_models" / model_name
     embedded_dir.mkdir(parents=True, exist_ok=True)
     artifact_dir = Path(artifact_path)
-    # Prefer model.bin, fallback to model.joblib
-    src = artifact_dir / "model.bin" if (artifact_dir / "model.bin").exists() else artifact_dir / "model.joblib"
-    dst = embedded_dir / "model.bin"
-    if src.exists():
-        shutil.copy2(src, dst)
+    # Copy model (prefer model.bin) and metadata so embedded app can load_bundle()
+    src_bin = artifact_dir / "model.bin" if (artifact_dir / "model.bin").exists() else artifact_dir / "model.joblib"
+    if src_bin.exists():
+        shutil.copy2(src_bin, embedded_dir / "model.bin")
+    if (artifact_dir / "metadata.json").exists():
+        shutil.copy2(artifact_dir / "metadata.json", embedded_dir / "metadata.json")
     # Record what is deployed (for "what model is in staging?")
     deploy_meta = {"model_name": model_name, "version": run_id, "stage": stage, "artifact_path": str(artifact_path)}
     (embedded_dir / "deploy_meta.json").write_text(json.dumps(deploy_meta, indent=2))
@@ -73,7 +74,7 @@ def deploy_to_embedded(
         baselines_dir.mkdir(parents=True, exist_ok=True)
         baseline_file = baselines_dir / f"{model_name}.json"
         baseline_file.write_text(json.dumps({"version": run_id, **metrics}, indent=2))
-    return dst
+    return embedded_dir / "model.bin"
 
 
 def deploy_to_target(

@@ -28,7 +28,7 @@ pip install -r requirements.txt
 foundation/cli.py train --model fraud_detector
 ```
 
-See [docs/golden-path.md](docs/golden-path.md) for the full workflow. Repo conventions: [docs/standards/surveyors-office.md](docs/standards/surveyors-office.md). **Phase 1 (MLflow, gates, deploy):** [docs/phase1-checklist.md](docs/phase1-checklist.md).
+See [docs/golden-path.md](docs/golden-path.md) for the full workflow. **Build & showcase an embedded model:** [docs/build-and-showcase-embedded.md](docs/build-and-showcase-embedded.md). Repo conventions: [docs/standards/surveyors-office.md](docs/standards/surveyors-office.md). **Phase 1 (MLflow, gates, deploy):** [docs/phase1-checklist.md](docs/phase1-checklist.md).
 
 ---
 
