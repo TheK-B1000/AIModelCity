@@ -37,7 +37,7 @@ foundation/cli.py eval --model fraud_detector --run-id <train-run-id>
 
 ## 4. Register
 
-Artifacts and metadata are stored in the registry (e.g. MLflow) by the train/eval pipelines. Promote to “production” when gates pass.
+Artifacts and metadata are stored under **runs/<run_id>/** (see [Surveyor's Office](standards/surveyors-office.md)) and indexed in the registry. Promote to “production” when gates pass.
 
 ## 5. Deploy
 

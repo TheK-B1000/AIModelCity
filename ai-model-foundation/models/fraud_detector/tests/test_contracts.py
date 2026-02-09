@@ -10,8 +10,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from foundation.data.contracts import load_contract_from_dict
-from foundation.data.validate import validate_dataframe, validate_row
+from foundation.data.validate import load_contract_from_dict, validate_dataframe, validate_row
 
 
 def test_validate_row_missing_required():

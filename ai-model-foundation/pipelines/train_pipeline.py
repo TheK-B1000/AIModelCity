@@ -37,10 +37,12 @@ def main() -> int:
                 config[k] = v
 
     data_path = args.data_path or config.get("data", {}).get("train_path", "data/train.csv")
-    artifacts_root = Path(config.get("artifacts", {}).get("root", "./artifacts"))
+    runs_root = Path(config.get("runs", {}).get("root") or config.get("artifacts", {}).get("root", "./runs"))
     import uuid
+    import json
     run_id = args.run_id or str(uuid.uuid4())[:8]
-    output_path = artifacts_root / args.model / run_id
+    run_dir = runs_root / run_id
+    output_path = run_dir / "artifact"
     output_path.mkdir(parents=True, exist_ok=True)
 
     result = run_train(
@@ -51,6 +53,7 @@ def main() -> int:
         run_id=run_id,
     )
     run_id = result.get("run_id", run_id)
+    (run_dir / "metrics.json").write_text(json.dumps(result.get("metrics") or {}, indent=2))
     reg = Registry(uri=config.get("registry", {}).get("uri", "./registry"))
     reg.log_run(args.model, run_id, metrics=result.get("metrics"), artifact_path=str(output_path))
     print(f"Run ID: {run_id}")

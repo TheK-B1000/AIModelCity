@@ -21,7 +21,7 @@ def rollback_to_version(
     """
     registry = registry or Registry()
     run = registry.get_run(model_name, to_version)
-    artifact_path = run.get("artifact_path") or f"./artifacts/{model_name}/{to_version}"
+    artifact_path = run.get("artifact_path") or f"./runs/{to_version}/artifact"
     deploy_to_target(
         model_name=model_name,
         version=to_version,

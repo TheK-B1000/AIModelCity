@@ -1,0 +1,6 @@
+transaction_id,amount,merchant_id,hour,is_fraud
+e1,11.0,m_a,15,0
+e2,80.0,m_b,8,0
+e3,600.0,m_c,2,1
+e4,7.0,m_a,19,0
+e5,200.0,m_b,0,1

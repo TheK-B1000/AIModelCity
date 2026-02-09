@@ -40,9 +40,10 @@ def main() -> int:
         print(f"Rolled back {args.model} to {args.version}")
         return 0
 
+    runs_root = Path(config.get("runs", {}).get("root") or config.get("artifacts", {}).get("root", "./runs"))
     reg = Registry(uri=config.get("registry", {}).get("uri", "./registry"))
     run = reg.get_run(args.model, args.version)
-    artifact_path = run.get("artifact_path") or str(Path(config.get("artifacts", {}).get("root", "./artifacts")) / args.model / args.version)
+    artifact_path = run.get("artifact_path") or str(runs_root / args.version / "artifact")
     deploy_to_target(args.model, args.version, artifact_path, target=args.target, config=config)
     print(f"Deployed {args.model}@{args.version} to {args.target}")
     return 0

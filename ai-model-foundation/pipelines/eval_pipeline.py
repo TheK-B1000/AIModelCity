@@ -33,9 +33,10 @@ def main() -> int:
             if k not in config:
                 config[k] = v
 
+    runs_root = Path(config.get("runs", {}).get("root") or config.get("artifacts", {}).get("root", "./runs"))
     reg = Registry(uri=config.get("registry", {}).get("uri", "./registry"))
     run = reg.get_run(args.model, args.run_id)
-    model_path = run.get("artifact_path") or str(Path(config.get("artifacts", {}).get("root", "./artifacts")) / args.model / args.run_id)
+    model_path = run.get("artifact_path") or str(runs_root / args.run_id / "artifact")
     eval_data = args.eval_data or config.get("data", {}).get("eval_path", "data/eval.csv")
 
     result = run_harness(

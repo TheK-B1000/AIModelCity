@@ -1,0 +1,14 @@
+{
+  "run_id": "2800ff00",
+  "metrics": {
+    "accuracy": 1.0,
+    "auc": 1.0
+  },
+  "feature_columns": [
+    "amount",
+    "hour",
+    "merchant_id_m_a",
+    "merchant_id_m_b",
+    "merchant_id_m_c"
+  ]
+}

@@ -1,9 +1,14 @@
 # Foundation defaults (overridable per model via model.yaml or env)
 
+# Run directory standard: runs/<run_id>/artifact/ (bundle), runs/<run_id>/metrics.json
+runs:
+  root: ./runs
+
 registry:
   backend: local  # or mlflow
   uri: ./registry
 
+# Deprecated: use runs.root; artifact path is runs/<run_id>/artifact
 artifacts:
   root: ./artifacts
   format: joblib  # or pickle, cloud path

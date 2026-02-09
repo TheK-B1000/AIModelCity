@@ -33,8 +33,7 @@ def _load_config(model_name: str | None) -> dict:
 
 
 def cmd_validate(args: argparse.Namespace) -> int:
-    from foundation.data.contracts import load_contract_from_dict
-    from foundation.data.validate import validate_dataframe
+    from foundation.data.validate import validate_dataframe, load_contract_from_dict
     import pandas as pd
     config = _load_config(args.model)
     contract_dict = config.get("data_contract", {})
@@ -52,26 +51,35 @@ def cmd_validate(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_dir(config: dict, run_id: str) -> Path:
+    """Canonical run directory: runs/<run_id>/ (with artifact/ inside)."""
+    runs_root = Path(config.get("runs", {}).get("root") or config.get("artifacts", {}).get("root", "./runs"))
+    return runs_root / run_id
+
+
 def cmd_train(args: argparse.Namespace) -> int:
     from foundation.core.runner import run_train
     from foundation.core.registry import Registry
-    from foundation.core.artifacts import save_bundle
     import uuid
+    import json
     config = _load_config(args.model)
     data_path = getattr(args, "data_path", None) or config.get("data", {}).get("train_path", "data/train.csv")
-    artifacts_root = Path(config.get("artifacts", {}).get("root", "./artifacts"))
-    output_path = artifacts_root / args.model / (args.run_id or str(uuid.uuid4())[:8])
+    run_id = args.run_id or str(uuid.uuid4())[:8]
+    run_dir = _run_dir(config, run_id)
+    output_path = run_dir / "artifact"
     output_path.mkdir(parents=True, exist_ok=True)
     result = run_train(
         model_name=args.model,
         config=config,
         data_path=str(data_path),
         output_path=str(output_path),
+        run_id=run_id,
     )
+    run_id = result.get("run_id", run_id)
+    (run_dir / "metrics.json").write_text(json.dumps(result.get("metrics") or {}, indent=2))
     reg = Registry(uri=config.get("registry", {}).get("uri", "./registry"))
-    run_id = result.get("run_id", output_path.name)
     reg.log_run(args.model, run_id, metrics=result.get("metrics"), artifact_path=str(output_path))
-    print(f"Run ID: {run_id}, artifact: {output_path}")
+    print(f"Run ID: {run_id}, run_dir: {run_dir}")
     return 0
 
 
@@ -81,7 +89,9 @@ def cmd_eval(args: argparse.Namespace) -> int:
     config = _load_config(args.model)
     reg = Registry(uri=config.get("registry", {}).get("uri", "./registry"))
     run = reg.get_run(args.model, args.run_id)
-    model_path = run.get("artifact_path") or str(Path(config.get("artifacts", {}).get("root", "./artifacts")) / args.model / args.run_id)
+    run_dir = _run_dir(config, args.run_id)
+    default_artifact = run_dir / "artifact"
+    model_path = run.get("artifact_path") or str(default_artifact)
     eval_data = getattr(args, "eval_data", None) or config.get("data", {}).get("eval_path", "data/eval.csv")
     result = run_harness(
         model_name=args.model,
