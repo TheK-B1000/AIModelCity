@@ -1,0 +1,44 @@
+# Fraud detector model config + signature + thresholds
+
+name: fraud_detector
+version: "1.0.0"
+
+data_contract:
+  name: fraud_input
+  version: "1.0"
+  features:
+    - name: amount
+      dtype: float
+      required: true
+      min_val: 0
+    - name: merchant_id
+      dtype: str
+      required: true
+    - name: hour
+      dtype: int
+      required: true
+      min_val: 0
+      max_val: 23
+  target:
+    name: is_fraud
+    dtype: int
+    required: true
+  identifiers:
+    - transaction_id
+
+data:
+  train_path: data/train.csv
+  eval_path: data/eval.csv
+
+eval:
+  gate_metrics:
+    - accuracy
+    - auc
+  baselines:
+    heuristic:
+      accuracy: 0.95
+      auc: 0.90
+  gate_delta_min: 0.0
+
+thresholds:
+  score_threshold: 0.5

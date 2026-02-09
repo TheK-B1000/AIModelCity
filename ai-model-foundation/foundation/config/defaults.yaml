@@ -1,0 +1,26 @@
+# Foundation defaults (overridable per model via model.yaml or env)
+
+registry:
+  backend: local  # or mlflow
+  uri: ./registry
+
+artifacts:
+  root: ./artifacts
+  format: joblib  # or pickle, cloud path
+
+runner:
+  log_level: INFO
+  capture_metrics: true
+
+eval:
+  baseline_min_accuracy: 0.0
+  gate_delta_min: 0.0   # min improvement over baseline to pass
+
+deploy:
+  staging_replicas: 1
+  prod_replicas: 2
+  canary_percent: 10
+
+observability:
+  drift_window: 1000
+  latency_bucket_sec: 0.1

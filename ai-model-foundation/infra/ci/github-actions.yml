@@ -1,0 +1,44 @@
+# CI for AI Model Foundation (use in .github/workflows/ci.yml)
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install -r requirements.txt
+          pip install pytest pandas pyyaml scikit-learn joblib
+
+      - name: Run tests
+        run: |
+          . .venv/bin/activate
+          cd ai-model-foundation && python -m pytest models/fraud_detector/tests/ -v
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Lint
+        run: |
+          pip install ruff
+          ruff check ai-model-foundation/foundation ai-model-foundation/models ai-model-foundation/pipelines --output-format=github
