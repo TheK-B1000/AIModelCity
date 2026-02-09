@@ -2,6 +2,7 @@
 
 name: fraud_detector
 version: "1.0.0"
+created: "2025-02-09"  # initial v1 monorepo
 
 data_contract:
   name: fraud_input
