@@ -1,0 +1,6 @@
+{
+  "model": "fraud_detector",
+  "dataset": "demo",
+  "data_path": "data/train.csv",
+  "run_id": "fraud_detector_20260209_171429"
+}
