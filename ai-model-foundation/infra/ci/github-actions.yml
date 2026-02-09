@@ -1,4 +1,4 @@
-# CI for AI Model Foundation (use in .github/workflows/ci.yml)
+# Phase 1 CI: validate -> train -> eval. If eval fails (exit 12), pipeline fails.
 name: CI
 
 on:
@@ -8,8 +8,11 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  foundation-gate:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-model-foundation
     steps:
       - uses: actions/checkout@v4
 
@@ -23,12 +26,49 @@ jobs:
           python -m venv .venv
           . .venv/bin/activate
           pip install -r requirements.txt
-          pip install pytest pandas pyyaml scikit-learn joblib
+          pip install pytest
 
-      - name: Run tests
+      - name: Data validate
         run: |
           . .venv/bin/activate
-          cd ai-model-foundation && python -m pytest models/fraud_detector/tests/ -v
+          python foundation/cli.py validate --model fraud_detector --data data/train.csv
+
+      - name: Train
+        id: train
+        run: |
+          . .venv/bin/activate
+          OUT=$(python foundation/cli.py train --model fraud_detector --dataset ci:v1 2>&1)
+          echo "$OUT"
+          RUN_ID=$(echo "$OUT" | sed -n 's/.*Run ID: \([^,]*\).*/\1/p' | tr -d ' ')
+          if [ -z "$RUN_ID" ]; then RUN_ID=$(ls -t runs 2>/dev/null | head -1); fi
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+
+      - name: Eval (gate)
+        run: |
+          . .venv/bin/activate
+          RUN_ID="${{ steps.train.outputs.run_id }}"
+          if [ -z "$RUN_ID" ]; then RUN_ID=$(ls -t runs 2>/dev/null | head -1); fi
+          python foundation/cli.py eval --model fraud_detector --run-id "$RUN_ID"
+        # Exit code 12 = gate failure; any non-zero fails the job
+
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-model-foundation
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install and run tests
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install -r requirements.txt
+          pip install pytest
+          python -m pytest models/fraud_detector/tests/ -v
 
   lint:
     runs-on: ubuntu-latest

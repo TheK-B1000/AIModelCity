@@ -1,0 +1,35 @@
+name: example_classifier
+version: "1.0.0"
+
+data_contract:
+  name: example_input
+  version: "1.0"
+  features:
+    - name: amount
+      dtype: float
+      required: true
+    - name: merchant_id
+      dtype: str
+      required: true
+    - name: hour
+      dtype: int
+      required: true
+  target:
+    name: is_fraud
+    dtype: int
+    required: true
+  identifiers: []
+
+data:
+  train_path: data/train.csv
+  eval_path: data/eval.csv
+
+eval:
+  gate_metrics:
+    - accuracy
+    - auc
+  baselines:
+    heuristic:
+      accuracy: 0.5
+      auc: 0.5
+  gate_delta_min: 0.0

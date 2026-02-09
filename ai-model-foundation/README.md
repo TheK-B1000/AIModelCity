@@ -8,12 +8,12 @@ If you can run 6 commands, you can ship a model.
 
 ## What you can do here
 
-- Validate datasets against model-specific data contracts
-- Train models in a reproducible way (dataset + code + config recorded)
-- Evaluate vs baselines with required gates
-- Register model artifacts and metadata
-- Deploy to staging/prod with canary and rollback
-- Monitor basic health signals (errors, latency, drift-lite)
+- **Validate** datasets against model-specific data contracts
+- **Train** — reproducible run ID `model_YYYYMMDD_HHMMSS`, artifact under `runs/<run_id>/artifact/` (model.bin, model.joblib)
+- **Eval** — baseline gates; exit code **12** on failure (CI blocks promotion)
+- **Register** — MLflow Registry Hall (`foundation register --model X --run <run_id> --stage dev|staging|prod`)
+- **Deploy** — copy to `embedded_models/<model>/model.bin`; prod deploy saves baseline to `baselines/`
+- Monitor basic health (errors, latency, drift-lite)
 
 ---
 
@@ -28,7 +28,7 @@ pip install -r requirements.txt
 foundation/cli.py train --model fraud_detector
 ```
 
-See [docs/golden-path.md](docs/golden-path.md) for the full workflow. Repo conventions, naming, and run structure: [docs/standards/surveyors-office.md](docs/standards/surveyors-office.md).
+See [docs/golden-path.md](docs/golden-path.md) for the full workflow. Repo conventions: [docs/standards/surveyors-office.md](docs/standards/surveyors-office.md). **Phase 1 (MLflow, gates, deploy):** [docs/phase1-checklist.md](docs/phase1-checklist.md).
 
 ---
 

@@ -1,0 +1,19 @@
+# Template model — copy to a new model and implement train/eval/predict
+
+name: _template_model
+version: "0.1.0"
+
+data_contract:
+  name: template_input
+  version: "1.0"
+  features: []
+  target: null
+  identifiers: []
+
+data:
+  train_path: data/train.csv
+  eval_path: data/eval.csv
+
+eval:
+  gate_metrics: []
+  gate_delta_min: 0.0

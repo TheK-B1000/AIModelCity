@@ -1,0 +1,7 @@
+{
+  "run_id": "fraud_detector_20260209_170159",
+  "model_name": "fraud_detector",
+  "dataset": "dummy:v1",
+  "artifact_path": "runs\\fraud_detector_20260209_170159\\artifact",
+  "timestamp": "2026-02-09T17:02:03.516937"
+}

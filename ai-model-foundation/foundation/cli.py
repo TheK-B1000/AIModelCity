@@ -60,11 +60,13 @@ def _run_dir(config: dict, run_id: str) -> Path:
 def cmd_train(args: argparse.Namespace) -> int:
     from foundation.core.runner import run_train
     from foundation.core.registry import Registry
-    import uuid
+    from datetime import datetime
     import json
     config = _load_config(args.model)
+    dataset = getattr(args, "dataset", None) or "default"
     data_path = getattr(args, "data_path", None) or config.get("data", {}).get("train_path", "data/train.csv")
-    run_id = args.run_id or str(uuid.uuid4())[:8]
+    # Phase 1: reproducible run_id = model_YYYYMMDD_HHMMSS
+    run_id = args.run_id or f"{args.model}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     run_dir = _run_dir(config, run_id)
     output_path = run_dir / "artifact"
     output_path.mkdir(parents=True, exist_ok=True)
@@ -74,20 +76,31 @@ def cmd_train(args: argparse.Namespace) -> int:
         data_path=str(data_path),
         output_path=str(output_path),
         run_id=run_id,
+        dataset=dataset,
     )
     run_id = result.get("run_id", run_id)
-    (run_dir / "metrics.json").write_text(json.dumps(result.get("metrics") or {}, indent=2))
-    reg = Registry(uri=config.get("registry", {}).get("uri", "./registry"))
-    reg.log_run(args.model, run_id, metrics=result.get("metrics"), artifact_path=str(output_path))
+    metrics = result.get("metrics") or {}
+    params = {"model": args.model, "dataset": dataset, "data_path": data_path, "run_id": run_id}
+    meta = {"run_id": run_id, "model_name": args.model, "dataset": dataset, "artifact_path": str(output_path)}
+    meta["timestamp"] = datetime.now().isoformat()
+    (run_dir / "metrics.json").write_text(json.dumps(metrics, indent=2))
+    (run_dir / "params.json").write_text(json.dumps(params, indent=2))
+    (run_dir / "meta.json").write_text(json.dumps(meta, indent=2))
+    reg = Registry(backend=config.get("registry", {}).get("backend", "local"), uri=config.get("registry", {}).get("uri", "./registry"))
+    reg.log_run(args.model, run_id, metrics=metrics, params=params, artifact_path=str(output_path))
     print(f"Run ID: {run_id}, run_dir: {run_dir}")
     return 0
+
+
+# Exit code for eval gate failure (CI depends on it)
+EVAL_GATE_FAIL_EXIT_CODE = 12
 
 
 def cmd_eval(args: argparse.Namespace) -> int:
     from foundation.core.registry import Registry
     from foundation.eval.harness import run_harness
     config = _load_config(args.model)
-    reg = Registry(uri=config.get("registry", {}).get("uri", "./registry"))
+    reg = Registry(backend=config.get("registry", {}).get("backend", "local"), uri=config.get("registry", {}).get("uri", "./registry"))
     run = reg.get_run(args.model, args.run_id)
     run_dir = _run_dir(config, args.run_id)
     default_artifact = run_dir / "artifact"
@@ -101,7 +114,53 @@ def cmd_eval(args: argparse.Namespace) -> int:
     )
     print("gate_passed:", result["gate_passed"])
     print("metrics:", result["metrics"])
-    return 0 if result["gate_passed"] else 1
+    if not result["gate_passed"]:
+        print("Eval gates failed; CI would block promotion.", file=sys.stderr)
+    return 0 if result["gate_passed"] else EVAL_GATE_FAIL_EXIT_CODE
+
+
+def cmd_register(args: argparse.Namespace) -> int:
+    """Register a run in MLflow and set stage (dev/staging/prod)."""
+    import json
+    from foundation.core.registry import Registry
+    config = _load_config(args.model)
+    reg = Registry(backend="mlflow", uri=config.get("registry", {}).get("uri", "http://127.0.0.1:5000"))
+    run_id = args.run_id
+    run_dir = _run_dir(config, run_id)
+    run_info = reg.get_run(args.model, run_id)
+    if not run_info.get("mlflow_run_id") and run_dir.exists():
+        metrics = json.loads((run_dir / "metrics.json").read_text()) if (run_dir / "metrics.json").exists() else {}
+        params = json.loads((run_dir / "params.json").read_text()) if (run_dir / "params.json").exists() else {}
+        artifact_path = run_dir / "artifact"
+        reg.log_run(args.model, run_id, metrics=metrics, params=params, artifact_path=str(artifact_path))
+    version = reg.register_run(args.model, run_id, stage=args.stage)
+    if version:
+        print(f"Registered {args.model} version {version} in stage '{args.stage}'. See MLflow UI.")
+        return 0
+    print("Registration failed. Is MLflow running (mlflow ui) and backend=mlflow?", file=sys.stderr)
+    return 1
+
+
+def cmd_deploy(args: argparse.Namespace) -> int:
+    """Copy artifact to embedded_models/<model>/model.bin and optionally save baseline if stage=prod."""
+    from foundation.core.registry import Registry
+    from foundation.deploy.serving import deploy_to_target
+    config = _load_config(args.model)
+    reg = Registry(backend=config.get("registry", {}).get("backend", "local"), uri=config.get("registry", {}).get("uri", "./registry"))
+    run_id = getattr(args, "version", None)
+    if not run_id:
+        print("Provide --version or --run-id (run_id of the run to deploy).", file=sys.stderr)
+        return 1
+    run_info = reg.get_run(args.model, run_id)
+    run_dir = _run_dir(config, run_id)
+    artifact_path = run_info.get("artifact_path") or str(run_dir / "artifact")
+    metrics = run_info.get("metrics")
+    deploy_to_target(args.model, run_id, artifact_path, target=args.stage, metrics=metrics, config=config)
+    embedded_path = _REPO_ROOT / "embedded_models" / args.model / "model.bin"
+    print(f"Deployed to embedded_models/{args.model}/model.bin (stage={args.stage})")
+    if args.stage == "prod" and metrics:
+        print("Baseline saved to baselines/ for regression protection.")
+    return 0
 
 
 def main() -> int:
@@ -115,8 +174,9 @@ def main() -> int:
     # train
     p_train = sub.add_parser("train")
     p_train.add_argument("--model", required=True)
-    p_train.add_argument("--run-id", default=None)
+    p_train.add_argument("--run-id", default=None, help="Override run ID (default: model_YYYYMMDD_HHMMSS)")
     p_train.add_argument("--data-path", default=None)
+    p_train.add_argument("--dataset", default=None, help="Dataset identifier (e.g. dummy:v1)")
     p_train.set_defaults(func=cmd_train)
     # eval
     p_eval = sub.add_parser("eval")
@@ -124,7 +184,18 @@ def main() -> int:
     p_eval.add_argument("--run-id", required=True)
     p_eval.add_argument("--eval-data", default=None)
     p_eval.set_defaults(func=cmd_eval)
-    # deploy / rollback can be added similarly
+    # register (MLflow)
+    p_reg = sub.add_parser("register")
+    p_reg.add_argument("--model", required=True)
+    p_reg.add_argument("--run", "--run-id", dest="run_id", required=True, help="Run ID (e.g. model_YYYYMMDD_HHMMSS)")
+    p_reg.add_argument("--stage", default="dev", choices=["dev", "staging", "prod"])
+    p_reg.set_defaults(func=cmd_register)
+    # deploy (copy to embedded_models)
+    p_dep = sub.add_parser("deploy")
+    p_dep.add_argument("--model", required=True)
+    p_dep.add_argument("--version", dest="version", required=True, help="Run ID to deploy (e.g. model_YYYYMMDD_HHMMSS)")
+    p_dep.add_argument("--stage", default="staging", choices=["staging", "prod"])
+    p_dep.set_defaults(func=cmd_deploy)
     args = parser.parse_args()
     return args.func(args)
 

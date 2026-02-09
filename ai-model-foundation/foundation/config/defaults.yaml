@@ -5,7 +5,7 @@ runs:
   root: ./runs
 
 registry:
-  backend: local  # or mlflow
+  backend: local  # set to mlflow and uri to http://127.0.0.1:5000 when using Registry Hall
   uri: ./registry
 
 # Deprecated: use runs.root; artifact path is runs/<run_id>/artifact

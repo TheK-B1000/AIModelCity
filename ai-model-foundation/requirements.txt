@@ -1,6 +1,7 @@
 # AI Model Foundation
 pyyaml>=6.0
 pandas>=2.0
+numpy>=1.24
 scikit-learn>=1.3
 joblib>=1.3
-# optional: mlflow for registry backend
+mlflow>=2.9
