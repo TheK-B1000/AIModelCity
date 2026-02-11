@@ -13,7 +13,7 @@ def save_bundle(path: str | Path, model: Any, metadata: Optional[dict] = None) -
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, path / "model.joblib")
-    joblib.dump(model, path / "model.bin")  # Phase 1: embedded_models expects model.bin
+    joblib.dump(model, path / "model.bin")  # Phase 1: deployments/embedded expects model.bin
     if metadata is not None:
         import json
         (path / "metadata.json").write_text(json.dumps(metadata, indent=2))

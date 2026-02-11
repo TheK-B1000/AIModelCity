@@ -5,7 +5,7 @@
 - [x] **foundation train** produces a reproducible artifact
 - [x] **foundation eval** enforces baseline gates (exit code 12 on failure)
 - [x] **foundation register** — MLflow shows versioned models
-- [x] **foundation deploy** — copies artifact to `embedded_models/<model>/model.bin`
+- [x] **foundation deploy** — copies artifact to `deployments/embedded/<model>/model.bin`
 - [x] Baseline compare: eval loads from `baselines/<model>.json`; deploy to prod saves baseline
 - [x] CI runs validate → train → eval; eval failure fails the pipeline
 
@@ -14,7 +14,7 @@
 Check:
 
 ```bash
-cat embedded_models/<model_name>/deploy_meta.json
+cat deployments/embedded/<model_name>/deploy_meta.json
 ```
 
 Contains: `model_name`, `version` (run_id), `stage`, `artifact_path`.
@@ -29,7 +29,7 @@ Or in MLflow UI (http://127.0.0.1:5000): Models → &lt;model&gt; → version in
 | `foundation train --model X [--dataset dummy:v1]` | Train; run_id = `X_YYYYMMDD_HHMMSS` |
 | `foundation eval --model X --run-id <run_id>` | Eval; exit 12 if gates fail |
 | `foundation register --model X --run <run_id> --stage dev` | Register in MLflow (requires `mlflow ui`) |
-| `foundation deploy --model X --version <run_id> --stage staging` | Copy to embedded_models; prod saves baseline |
+| `foundation deploy --model X --version <run_id> --stage staging` | Copy to deployments/embedded; prod saves baseline |
 
 ## Run layout (Phase 1)
 

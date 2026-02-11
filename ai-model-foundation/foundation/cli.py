@@ -142,7 +142,7 @@ def cmd_register(args: argparse.Namespace) -> int:
 
 
 def cmd_deploy(args: argparse.Namespace) -> int:
-    """Copy artifact to embedded_models/<model>/model.bin and optionally save baseline if stage=prod."""
+    """Copy artifact to deployments/embedded/<model>/model.bin and optionally save baseline if stage=prod."""
     from foundation.core.registry import Registry
     from foundation.deploy.serving import deploy_to_target
     config = _load_config(args.model)
@@ -156,8 +156,8 @@ def cmd_deploy(args: argparse.Namespace) -> int:
     artifact_path = run_info.get("artifact_path") or str(run_dir / "artifact")
     metrics = run_info.get("metrics")
     deploy_to_target(args.model, run_id, artifact_path, target=args.stage, metrics=metrics, config=config)
-    embedded_path = _REPO_ROOT / "embedded_models" / args.model / "model.bin"
-    print(f"Deployed to embedded_models/{args.model}/model.bin (stage={args.stage})")
+    embedded_path = _REPO_ROOT / "deployments" / "embedded" / args.model / "model.bin"
+    print(f"Deployed to deployments/embedded/{args.model}/model.bin (stage={args.stage})")
     if args.stage == "prod" and metrics:
         print("Baseline saved to baselines/ for regression protection.")
     return 0
@@ -190,7 +190,7 @@ def main() -> int:
     p_reg.add_argument("--run", "--run-id", dest="run_id", required=True, help="Run ID (e.g. model_YYYYMMDD_HHMMSS)")
     p_reg.add_argument("--stage", default="dev", choices=["dev", "staging", "prod"])
     p_reg.set_defaults(func=cmd_register)
-    # deploy (copy to embedded_models)
+    # deploy (copy to deployments/embedded)
     p_dep = sub.add_parser("deploy")
     p_dep.add_argument("--model", required=True)
     p_dep.add_argument("--version", dest="version", required=True, help="Run ID to deploy (e.g. model_YYYYMMDD_HHMMSS)")

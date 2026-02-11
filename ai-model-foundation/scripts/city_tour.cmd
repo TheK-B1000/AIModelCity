@@ -21,7 +21,7 @@ python foundation\cli.py eval --model fraud_detector --run-id %RUN_ID%
 if errorlevel 1 exit /b 1
 echo.
 
-echo 4. Deploy (embedded_models)...
+echo 4. Deploy (deployments/embedded)...
 python foundation\cli.py deploy --model fraud_detector --version %RUN_ID% --stage staging
 echo.
 
@@ -30,6 +30,6 @@ python scripts\showcase_embedded.py --model fraud_detector
 echo.
 
 echo 6. What's in staging?
-type embedded_models\fraud_detector\deploy_meta.json 2>nul
+type deployments\embedded\fraud_detector\deploy_meta.json 2>nul
 echo.
 echo === City tour done ===

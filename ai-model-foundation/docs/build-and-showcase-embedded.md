@@ -34,7 +34,7 @@ python foundation/cli.py train --model fraud_detector --dataset demo
 # Eval (use the Run ID from train output)
 python foundation/cli.py eval --model fraud_detector --run-id fraud_detector_20260209_170159
 
-# Deploy to embedded_models/
+# Deploy to deployments/embedded/
 python foundation/cli.py deploy --model fraud_detector --version fraud_detector_20260209_170159 --stage staging
 ```
 
@@ -54,7 +54,7 @@ You should see:
 - Which version is in staging (`deploy_meta.json`)
 - A few example predictions (score and probability)
 
-That demonstrates: the app loads `embedded_models/fraud_detector/model.bin` (and metadata) and serves inference.
+That demonstrates: the app loads `deployments/embedded/fraud_detector/model.bin` (and metadata) and serves inference.
 
 ---
 
@@ -76,8 +76,8 @@ python scripts/showcase_embedded.py --model example_classifier
 
 ```bash
 # What’s deployed
-type embedded_models\fraud_detector\deploy_meta.json   # Windows
-cat embedded_models/fraud_detector/deploy_meta.json   # Mac/Linux
+type deployments\embedded\fraud_detector\deploy_meta.json   # Windows
+cat deployments/embedded/fraud_detector/deploy_meta.json   # Mac/Linux
 ```
 
 Shows: `model_name`, `version` (run_id), `stage`, `artifact_path`.

@@ -1,5 +1,5 @@
 """
-Deploy helpers: copy artifact to embedded_models/ (Phase 1), and optional K8s/serving.
+Deploy helpers: copy artifact to deployments/embedded/ (Phase 1), and optional K8s/serving.
 """
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-def _embedded_models_root() -> Path:
-    """Repo root for embedded_models/."""
+def _deployments_root() -> Path:
+    """Repo root for deployments/ (embedded, future channels, etc.)."""
     return Path(__file__).resolve().parent.parent.parent
 
 
@@ -52,12 +52,12 @@ def deploy_to_embedded(
     config: Optional[dict] = None,
 ) -> Path:
     """
-    Copy artifact from runs/<run_id>/artifact/ to embedded_models/<model_name>/model.bin.
+    Copy artifact from runs/<run_id>/artifact/ to deployments/embedded/<model_name>/model.bin.
     If stage is prod, save baseline to baselines/<model_name>.json.
-    Returns path to embedded_models/<model_name>/model.bin.
+    Returns path to deployments/embedded/<model_name>/model.bin.
     """
-    root = _embedded_models_root()
-    embedded_dir = root / "embedded_models" / model_name
+    root = _deployments_root()
+    embedded_dir = root / "deployments" / "embedded" / model_name
     embedded_dir.mkdir(parents=True, exist_ok=True)
     artifact_dir = Path(artifact_path)
     # Copy model (prefer model.bin) and metadata so embedded app can load_bundle()
@@ -85,5 +85,5 @@ def deploy_to_target(
     metrics: Optional[dict] = None,
     config: Optional[dict] = None,
 ) -> None:
-    """Copy to embedded_models (and save baseline if target=prod). Optionally trigger K8s."""
+    """Copy to deployments/embedded (and save baseline if target=prod). Optionally trigger K8s."""
     deploy_to_embedded(model_name, version, artifact_path, stage=target, metrics=metrics, config=config)

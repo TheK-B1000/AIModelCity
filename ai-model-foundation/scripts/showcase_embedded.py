@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Showcase: load the embedded model and run a few predictions.
+Showcase: load the embedded deployment model and run a few predictions.
 Run from repo root:  python scripts/showcase_embedded.py [--model fraud_detector]
 """
 from __future__ import annotations
@@ -20,7 +20,7 @@ def main():
     parser.add_argument("--model", default="fraud_detector", help="Model name (default: fraud_detector)")
     args = parser.parse_args()
 
-    embedded_dir = REPO_ROOT / "embedded_models" / args.model
+    embedded_dir = REPO_ROOT / "deployments" / "embedded" / args.model
     if not embedded_dir.exists():
         print(f"No embedded model at {embedded_dir}. Run:", file=sys.stderr)
         print("  foundation train --model fraud_detector", file=sys.stderr)
@@ -51,7 +51,7 @@ def main():
         else:
             print(f"  {i}. {out}")
     print("-" * 50)
-    print("Done. This is the model currently in embedded_models/ (staging).")
+    print("Done. This is the model currently in deployments/embedded/ (staging).")
     return 0
 
 
