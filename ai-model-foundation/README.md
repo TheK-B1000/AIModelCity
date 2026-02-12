@@ -71,3 +71,13 @@ Run from **ai-model-foundation** (after `pip install -r requirements.txt`). Use 
 
 **Full tour (validate → train → eval → deploy → showcase):**  
 `scripts\city_tour.cmd` (Windows) or `./scripts/city_tour.sh` (Unix).
+
+---
+
+## Security & configuration
+
+- **Secrets:** No API keys, DB URLs, or credentials in repo. Use environment variables or a secret manager. Copy `.env.example` to `.env` and set values locally; never commit `.env`. See [docs/security.md](docs/security.md).
+- **Required env (optional for local runs):**  
+  `FOUNDATION_REGISTRY_URI`, `FOUNDATION_REGISTRY_BACKEND` when using MLflow; `MLFLOW_TRACKING_URI` if you run MLflow UI. See `.env.example`.
+- **Data:** Real data must not be committed. `data/*.csv` is in `.gitignore`. Use secure storage and pass paths at runtime (e.g. `--data-path` / config). Document where production data lives in your runbooks.
+- **Artifacts:** Model bundles are signed (SHA-256); load verifies checksums and rejects tampered files. See [docs/security.md](docs/security.md) for the full checklist.

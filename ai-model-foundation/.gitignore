@@ -1,0 +1,32 @@
+# Dependencies and env
+.venv/
+venv/
+.env
+*.pyc
+__pycache__/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Data — do not commit real data; use secure storage and pull at runtime
+data/*.csv
+data/*.parquet
+data/*.json
+!data/.gitkeep
+
+# Foundry outputs (optional: ignore runs to avoid large binaries in repo)
+# runs/
+
+# Registry local index (optional)
+# registry/
+
+# IDE and OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Lockfile from pip-tools (if you generate next to requirements.in)
+# requirements.lock

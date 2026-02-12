@@ -57,6 +57,34 @@ def _run_dir(config: dict, run_id: str) -> Path:
     return runs_root / run_id
 
 
+def _get_provenance() -> dict:
+    """Return git commit and branch for provenance metadata (empty if not a git repo)."""
+    import subprocess
+    out = {}
+    try:
+        r = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=_REPO_ROOT,
+            timeout=5,
+        )
+        if r.returncode == 0 and r.stdout:
+            out["git_commit"] = r.stdout.strip()
+        r = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=_REPO_ROOT,
+            timeout=5,
+        )
+        if r.returncode == 0 and r.stdout:
+            out["git_branch"] = r.stdout.strip()
+    except Exception:
+        pass
+    return out
+
+
 def cmd_train(args: argparse.Namespace) -> int:
     from foundation.core.runner import run_train
     from foundation.core.registry import Registry
@@ -80,9 +108,9 @@ def cmd_train(args: argparse.Namespace) -> int:
     )
     run_id = result.get("run_id", run_id)
     metrics = result.get("metrics") or {}
-    params = {"model": args.model, "dataset": dataset, "data_path": data_path, "run_id": run_id}
-    meta = {"run_id": run_id, "model_name": args.model, "dataset": dataset, "artifact_path": str(output_path)}
-    meta["timestamp"] = datetime.now().isoformat()
+    provenance = _get_provenance()
+    params = {"model": args.model, "dataset": dataset, "data_path": data_path, "run_id": run_id, **provenance}
+    meta = {"run_id": run_id, "model_name": args.model, "dataset": dataset, "artifact_path": str(output_path), "timestamp": datetime.now().isoformat(), **provenance}
     (run_dir / "metrics.json").write_text(json.dumps(metrics, indent=2))
     (run_dir / "params.json").write_text(json.dumps(params, indent=2))
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=2))

@@ -28,6 +28,13 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
+      - name: Audit dependencies (fail on known vulnerabilities)
+        run: |
+          . .venv/bin/activate
+          pip install pip-audit
+          pip-audit -r requirements.txt
+        continue-on-error: false
+
       - name: Data validate
         run: |
           . .venv/bin/activate

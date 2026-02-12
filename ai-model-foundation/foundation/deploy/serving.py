@@ -60,12 +60,14 @@ def deploy_to_embedded(
     embedded_dir = root / "deployments" / "embedded" / model_name
     embedded_dir.mkdir(parents=True, exist_ok=True)
     artifact_dir = Path(artifact_path)
-    # Copy model (prefer model.bin) and metadata so embedded app can load_bundle()
+    # Copy model, metadata, and checksum so embedded app can load_bundle() with verification
     src_bin = artifact_dir / "model.bin" if (artifact_dir / "model.bin").exists() else artifact_dir / "model.joblib"
     if src_bin.exists():
         shutil.copy2(src_bin, embedded_dir / "model.bin")
     if (artifact_dir / "metadata.json").exists():
         shutil.copy2(artifact_dir / "metadata.json", embedded_dir / "metadata.json")
+    if (artifact_dir / "checksum.sha256").exists():
+        shutil.copy2(artifact_dir / "checksum.sha256", embedded_dir / "checksum.sha256")
     # Record what is deployed (for "what model is in staging?")
     deploy_meta = {"model_name": model_name, "version": run_id, "stage": stage, "artifact_path": str(artifact_path)}
     (embedded_dir / "deploy_meta.json").write_text(json.dumps(deploy_meta, indent=2))
